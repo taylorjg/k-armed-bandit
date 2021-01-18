@@ -22,12 +22,6 @@ const range = n => Array.from(Array(n).keys())
 
 const randomChoice = xs => xs[Math.floor(Math.random() * xs.length)]
 
-const average = xs => {
-  const sum = xs.reduce((acc, x) => acc + x, 0)
-  const count = xs.length
-  return sum / count
-}
-
 const argmax = xs => {
   let topValue = Number.NEGATIVE_INFINITY
   let ties = []
@@ -63,66 +57,92 @@ const makeArmDistributions = k => {
   return armDistributions
 }
 
-const bandit = (armDistributions, optimalArm, epsilon, steps) => {
-  const k = armDistributions.length
-  const arms = range(k)
-  const ns = Array(k).fill(0)
-  const qs = Array(k).fill(0)
-  const rewards = []
-  range(steps).forEach(() => {
-    const arm = Math.random() < epsilon ? randomChoice(arms) : argmax(qs)
-    const isOptimal = arm === optimalArm
-    const reward = armDistributions[arm].normal()
-    rewards.push(reward)
-    const n = ns[arm] + 1
-    ns[arm] = n
-    const oldEstimate = qs[arm]
-    const newEstimate = oldEstimate + (1 / n) * (reward - oldEstimate)
-    qs[arm] = newEstimate
-  })
-  return rewards
+const bandit = (experiment, armDistributions, optimalArm, arms) => {
+  const arm = Math.random() < experiment.epsilon
+    ? randomChoice(arms)
+    : argmax(experiment.qs)
+  const reward = armDistributions[arm].normal()
+  const n = experiment.ns[arm] + 1
+  experiment.ns[arm] = n
+  const oldEstimate = experiment.qs[arm]
+  const newEstimate = oldEstimate + (1 / n) * (reward - oldEstimate)
+  experiment.qs[arm] = newEstimate
+  const isOptimal = arm === optimalArm
+  return { reward, isOptimal }
 }
 
 const k = 10
 const runs = 2000
 const steps = 1000
 
-const setsOfRewards1 = []
-const setsOfRewards2 = []
-const setsOfRewards3 = []
+const experiments = [
+  {
+    label: 'greedy',
+    colour: 'green',
+    epsilon: 0,
+    ns: [],
+    qs: []
+  },
+  {
+    label: 'ε = 0.01',
+    colour: 'red',
+    epsilon: 0.01,
+    ns: [],
+    qs: []
+  },
+  {
+    label: 'ε = 0.1',
+    colour: 'blue',
+    epsilon: 0.1,
+    ns: [],
+    qs: []
+  }
+]
 
-range(runs).forEach(() => {
+const results = [
+  {
+    runningAverageReward: Array(steps).fill(0),
+    runningAveragePercentOptimalAction: Array(steps).fill(0)
+  },
+  {
+    runningAverageReward: Array(steps).fill(0),
+    runningAveragePercentOptimalAction: Array(steps).fill(0)
+  },
+  {
+    runningAverageReward: Array(steps).fill(0),
+    runningAveragePercentOptimalAction: Array(steps).fill(0)
+  }
+]
+
+const runExperiments = (experiments, armDistributions, optimalArm, arms, steps) => {
+  for (const experiment of experiments) {
+    experiment.ns = Array(k).fill(0)
+    experiment.qs = Array(k).fill(0)
+  }
+  return range(steps).map(() =>
+    experiments.map(experiment => bandit(experiment, armDistributions, optimalArm, arms))
+  )
+}
+
+range(runs).forEach(run => {
+  const n = run + 1
   const armDistributions = makeArmDistributions(k)
+  const arms = range(k)
   const trueValues = armDistributions.map(({ trueValue }) => trueValue)
   const optimalArm = argmax(trueValues)
-  const setOfRewards1 = bandit(armDistributions, optimalArm, 0, steps)
-  const setOfRewards2 = bandit(armDistributions, optimalArm, 0.01, steps)
-  const setOfRewards3 = bandit(armDistributions, optimalArm, 0.1, steps)
-  setsOfRewards1.push(setOfRewards1)
-  setsOfRewards2.push(setOfRewards2)
-  setsOfRewards3.push(setOfRewards3)
-})
+  const stepResults = runExperiments(experiments, armDistributions, optimalArm, arms, steps)
+  stepResults.forEach((stepResult, step) => {
+    stepResult.forEach(({ reward, isOptimal }, experimentIndex) => {
+      const oldRunningAverageReward = results[experimentIndex].runningAverageReward[step]
+      const newRunningAverageReward = oldRunningAverageReward + (1 / n) * (reward - oldRunningAverageReward)
+      results[experimentIndex].runningAverageReward[step] = newRunningAverageReward
 
-const averageRewards1 = []
-const averageRewards2 = []
-const averageRewards3 = []
-
-range(steps).forEach(step => {
-  const rewards = setsOfRewards1.map(setOfRewards => setOfRewards[step])
-  const averageReward = average(rewards)
-  averageRewards1.push(averageReward)
-})
-
-range(steps).forEach(step => {
-  const rewards = setsOfRewards2.map(setOfRewards => setOfRewards[step])
-  const averageReward = average(rewards)
-  averageRewards2.push(averageReward)
-})
-
-range(steps).forEach(step => {
-  const rewards = setsOfRewards3.map(setOfRewards => setOfRewards[step])
-  const averageReward = average(rewards)
-  averageRewards3.push(averageReward)
+      const percentOptimalAction = isOptimal ? 100 : 0
+      const oldRunningAveragePercentOptimalAction = results[experimentIndex].runningAveragePercentOptimalAction[step]
+      const newRunningAveragePercentOptimalAction = oldRunningAveragePercentOptimalAction + (1 / n) * (percentOptimalAction - oldRunningAveragePercentOptimalAction)
+      results[experimentIndex].runningAveragePercentOptimalAction[step] = newRunningAveragePercentOptimalAction
+    })
+  })
 })
 
 const drawLines = lines => {
@@ -155,9 +175,39 @@ const drawLines = lines => {
 }
 
 const lines = [
-  { data: averageRewards1, label: 'greedy', colour: 'green' },
-  { data: averageRewards2, label: 'ε = 0.01', colour: 'red' },
-  { data: averageRewards3, label: 'ε = 0.1', colour: 'blue' }
+  {
+    label: experiments[0].label,
+    colour: experiments[0].colour,
+    data: results[0].runningAverageReward
+  },
+  {
+    label: experiments[1].label,
+    colour: experiments[1].colour,
+    data: results[1].runningAverageReward
+  },
+  {
+    label: experiments[2].label,
+    colour: experiments[2].colour,
+    data: results[2].runningAverageReward
+  }
 ]
+
+// const lines = [
+//   {
+//     label: experiments[0].label,
+//     colour: experiments[0].colour,
+//     data: results[0].runningAveragePercentOptimalAction
+//   },
+//   {
+//     label: experiments[1].label,
+//     colour: experiments[1].colour,
+//     data: results[1].runningAveragePercentOptimalAction
+//   },
+//   {
+//     label: experiments[2].label,
+//     colour: experiments[2].colour,
+//     data: results[2].runningAveragePercentOptimalAction
+//   }
+// ]
 
 drawLines(lines)
