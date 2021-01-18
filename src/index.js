@@ -133,19 +133,20 @@ range(runs).forEach(run => {
   const stepResults = runExperiments(experiments, armDistributions, optimalArm, arms, steps)
   stepResults.forEach((stepResult, step) => {
     stepResult.forEach(({ reward, isOptimal }, experimentIndex) => {
-      const oldRunningAverageReward = results[experimentIndex].runningAverageReward[step]
-      const newRunningAverageReward = oldRunningAverageReward + (1 / n) * (reward - oldRunningAverageReward)
-      results[experimentIndex].runningAverageReward[step] = newRunningAverageReward
+
+      const oldAverage1 = results[experimentIndex].runningAverageReward[step]
+      const newAverage1 = oldAverage1 + (1 / n) * (reward - oldAverage1)
+      results[experimentIndex].runningAverageReward[step] = newAverage1
 
       const percentOptimalAction = isOptimal ? 100 : 0
-      const oldRunningAveragePercentOptimalAction = results[experimentIndex].runningAveragePercentOptimalAction[step]
-      const newRunningAveragePercentOptimalAction = oldRunningAveragePercentOptimalAction + (1 / n) * (percentOptimalAction - oldRunningAveragePercentOptimalAction)
-      results[experimentIndex].runningAveragePercentOptimalAction[step] = newRunningAveragePercentOptimalAction
+      const oldAverage2 = results[experimentIndex].runningAveragePercentOptimalAction[step]
+      const newAverage2 = oldAverage2 + (1 / n) * (percentOptimalAction - oldAverage2)
+      results[experimentIndex].runningAveragePercentOptimalAction[step] = newAverage2
     })
   })
 })
 
-const drawLines = lines => {
+const drawLines = (chartElement, lines) => {
   const makeDataset = line => ({
     data: line.data,
     label: line.label,
@@ -154,7 +155,6 @@ const drawLines = lines => {
     borderWidth: 1,
     radius: 0
   })
-  const chartElement = document.getElementById('chart')
   new Chart(chartElement, {
     type: 'line',
     data: {
@@ -174,40 +174,16 @@ const drawLines = lines => {
   })
 }
 
-const lines = [
-  {
-    label: experiments[0].label,
-    colour: experiments[0].colour,
-    data: results[0].runningAverageReward
-  },
-  {
-    label: experiments[1].label,
-    colour: experiments[1].colour,
-    data: results[1].runningAverageReward
-  },
-  {
-    label: experiments[2].label,
-    colour: experiments[2].colour,
-    data: results[2].runningAverageReward
-  }
-]
+const lines1 = experiments.map((experiment, index) => ({
+  label: experiment.label,
+  colour: experiment.colour,
+  data: results[index].runningAverageReward
+}))
+drawLines('chart1', lines1)
 
-// const lines = [
-//   {
-//     label: experiments[0].label,
-//     colour: experiments[0].colour,
-//     data: results[0].runningAveragePercentOptimalAction
-//   },
-//   {
-//     label: experiments[1].label,
-//     colour: experiments[1].colour,
-//     data: results[1].runningAveragePercentOptimalAction
-//   },
-//   {
-//     label: experiments[2].label,
-//     colour: experiments[2].colour,
-//     data: results[2].runningAveragePercentOptimalAction
-//   }
-// ]
-
-drawLines(lines)
+const lines2 = experiments.map((experiment, index) => ({
+  label: experiment.label,
+  colour: experiment.colour,
+  data: results[index].runningAveragePercentOptimalAction
+}))
+drawLines('chart2', lines2)
