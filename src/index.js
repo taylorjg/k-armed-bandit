@@ -57,10 +57,8 @@ const makeArmDistributions = k => {
   return armDistributions
 }
 
-const bandit = (experiment, armDistributions, optimalArm, arms) => {
-  const arm = Math.random() < experiment.epsilon
-    ? randomChoice(arms)
-    : argmax(experiment.qs)
+const bandit = (experiment, armDistributions, optimalArm, arms, t) => {
+  const arm = experiment.chooseArm(arms, t, experiment.ns, experiment.qs)
   const reward = armDistributions[arm].normal()
   const n = experiment.ns[arm] + 1
   experiment.ns[arm] = n
@@ -75,52 +73,64 @@ const k = 10
 const runs = 2000
 const steps = 1000
 
+const greedy = (_arms, _t, _ns, qs) =>
+  argmax(qs)
+
+const epsilonGreedy = epsilon => (arms, _t, _ns, qs) =>
+  Math.random() < epsilon ? randomChoice(arms) : argmax(qs)
+
+const upperConfidenceBound = c => (_arms, t, ns, qs) => {
+  const values = qs.map((q, index) => {
+    const n = ns[index]
+    if (n === 0) return Number.MAX_SAFE_INTEGER
+    return q + c * Math.sqrt(Math.log(t) / n)
+  })
+  return argmax(values)
+}
+
 const experiments = [
   {
     label: 'greedy',
     colour: 'green',
-    epsilon: 0,
+    chooseArm: greedy,
     ns: [],
     qs: []
   },
   {
-    label: 'ε = 0.01',
+    label: 'ε-greedy, ε = 0.01',
     colour: 'red',
-    epsilon: 0.01,
+    chooseArm: epsilonGreedy(0.01),
     ns: [],
     qs: []
   },
   {
-    label: 'ε = 0.1',
+    label: 'ε-greedy, ε = 0.1',
     colour: 'blue',
-    epsilon: 0.1,
+    chooseArm: epsilonGreedy(0.1),
+    ns: [],
+    qs: []
+  },
+  {
+    label: 'UCB, c = 2',
+    colour: 'purple',
+    chooseArm: upperConfidenceBound(2),
     ns: [],
     qs: []
   }
 ]
 
-const results = [
-  {
-    runningAverageReward: Array(steps).fill(0),
-    runningAveragePercentOptimalAction: Array(steps).fill(0)
-  },
-  {
-    runningAverageReward: Array(steps).fill(0),
-    runningAveragePercentOptimalAction: Array(steps).fill(0)
-  },
-  {
-    runningAverageReward: Array(steps).fill(0),
-    runningAveragePercentOptimalAction: Array(steps).fill(0)
-  }
-]
+const results = experiments.map(() => ({
+  runningAverageReward: Array(steps).fill(0),
+  runningAveragePercentOptimalAction: Array(steps).fill(0)
+}))
 
 const runExperiments = (experiments, armDistributions, optimalArm, arms, steps) => {
   for (const experiment of experiments) {
     experiment.ns = Array(k).fill(0)
     experiment.qs = Array(k).fill(0)
   }
-  return range(steps).map(() =>
-    experiments.map(experiment => bandit(experiment, armDistributions, optimalArm, arms))
+  return range(steps).map(step =>
+    experiments.map(experiment => bandit(experiment, armDistributions, optimalArm, arms, step + 1))
   )
 }
 
