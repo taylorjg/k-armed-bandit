@@ -84,17 +84,35 @@ const bandit = (armDistributions, epsilon, steps) => {
   return rewards
 }
 
-const drawChart = (data, label) => {
+const drawChart = (data1, label1, data2, label2, data3, label3) => {
   const chartElement = document.getElementById('chart')
   new Chart(chartElement, {
     type: 'line',
     data: {
       datasets: [
         {
-          label,
-          data,
+          data: data1,
+          label: label1,
+          fill: false,
+          borderColor: 'green',
+          borderWidth: 1,
+          radius: 0,
+          lineTension: 0
+        },
+        {
+          data: data2,
+          label: label2,
           fill: false,
           borderColor: 'red',
+          borderWidth: 1,
+          radius: 0,
+          lineTension: 0
+        },
+        {
+          data: data3,
+          label: label3,
+          fill: false,
+          borderColor: 'blue',
           borderWidth: 1,
           radius: 0,
           lineTension: 0
@@ -104,7 +122,7 @@ const drawChart = (data, label) => {
     options: {
       scales: {
         xAxes: [{
-          labels: data.map((_, index) => index + 1)
+          labels: data1.map((_, index) => index + 1)
         }]
       },
       events: [],
@@ -118,21 +136,45 @@ const drawChart = (data, label) => {
 const k = 10
 const runs = 2000
 const steps = 1000
-const setsOfRewards = []
-const epsilon = 0.1
+
+const setsOfRewards1 = []
+const setsOfRewards2 = []
+const setsOfRewards3 = []
 
 range(runs).forEach(() => {
   const armDistributions = makeArmDistributions(k)
-  const setOfRewards = bandit(armDistributions, epsilon, steps)
-  setsOfRewards.push(setOfRewards)
+  const setOfRewards1 = bandit(armDistributions, 0, steps)
+  const setOfRewards2 = bandit(armDistributions, 0.01, steps)
+  const setOfRewards3 = bandit(armDistributions, 0.1, steps)
+  setsOfRewards1.push(setOfRewards1)
+  setsOfRewards2.push(setOfRewards2)
+  setsOfRewards3.push(setOfRewards3)
 })
 
-const averageRewards = []
+const averageRewards1 = []
+const averageRewards2 = []
+const averageRewards3 = []
 
 range(steps).forEach(step => {
-  const rewards = setsOfRewards.map(setOfRewards => setOfRewards[step])
+  const rewards = setsOfRewards1.map(setOfRewards => setOfRewards[step])
   const averageReward = average(rewards)
-  averageRewards.push(averageReward)
+  averageRewards1.push(averageReward)
 })
 
-drawChart(averageRewards, `ε = ${epsilon}`)
+range(steps).forEach(step => {
+  const rewards = setsOfRewards2.map(setOfRewards => setOfRewards[step])
+  const averageReward = average(rewards)
+  averageRewards2.push(averageReward)
+})
+
+range(steps).forEach(step => {
+  const rewards = setsOfRewards3.map(setOfRewards => setOfRewards[step])
+  const averageReward = average(rewards)
+  averageRewards3.push(averageReward)
+})
+
+drawChart(
+  averageRewards1, 'greedy',
+  averageRewards2, 'ε = 0.01',
+  averageRewards3, 'ε = 0.1'
+)
