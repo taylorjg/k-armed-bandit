@@ -28,6 +28,22 @@ const average = xs => {
   return sum / count
 }
 
+const argmax = xs => {
+  let topValue = Number.NEGATIVE_INFINITY
+  let ties = []
+  xs.forEach((value, index) => {
+    if (value > topValue) {
+      topValue = value
+      ties = [index]
+    } else {
+      if (value === topValue) {
+        ties.push(index)
+      }
+    }
+  })
+  return ties.length === 1 ? ties[0] : randomChoice(ties)
+}
+
 const makeTrueValues = k => {
   const mean = 0
   const variance = 1
@@ -47,90 +63,24 @@ const makeArmDistributions = k => {
   return armDistributions
 }
 
-const argmax = qs => {
-  let topValue = Number.NEGATIVE_INFINITY
-  let ties = []
-  for (const [arm, value] of qs) {
-    if (value > topValue) {
-      topValue = value
-      ties = [arm]
-    } else {
-      if (value === topValue) {
-        ties.push(arm)
-      }
-    }
-  }
-  return ties.length > 1 ? randomChoice(ties) : ties[0]
-}
-
-const bandit = (armDistributions, epsilon, steps) => {
-  const arms = armDistributions.map(({ arm }) => arm)
-  const ns = new Map(arms.map(arm => [arm, 0]))
-  const qs = new Map(arms.map(arm => [arm, 0]))
+const bandit = (armDistributions, optimalArm, epsilon, steps) => {
+  const k = armDistributions.length
+  const arms = range(k)
+  const ns = Array(k).fill(0)
+  const qs = Array(k).fill(0)
   const rewards = []
   range(steps).forEach(() => {
     const arm = Math.random() < epsilon ? randomChoice(arms) : argmax(qs)
+    const isOptimal = arm === optimalArm
     const reward = armDistributions[arm].normal()
     rewards.push(reward)
-    const oldCount = ns.get(arm)
-    const newCount = oldCount + 1
-    ns.set(arm, newCount)
-    const oldQValue = qs.get(arm)
-    const newQValue = oldQValue + (1 / newCount) * (reward - oldQValue)
-    qs.set(arm, newQValue)
+    const n = ns[arm] + 1
+    ns[arm] = n
+    const oldEstimate = qs[arm]
+    const newEstimate = oldEstimate + (1 / n) * (reward - oldEstimate)
+    qs[arm] = newEstimate
   })
-  console.log('ns:', ns)
-  console.log('qs:', qs)
   return rewards
-}
-
-const drawChart = (data1, label1, data2, label2, data3, label3) => {
-  const chartElement = document.getElementById('chart')
-  new Chart(chartElement, {
-    type: 'line',
-    data: {
-      datasets: [
-        {
-          data: data1,
-          label: label1,
-          fill: false,
-          borderColor: 'green',
-          borderWidth: 1,
-          radius: 0,
-          lineTension: 0
-        },
-        {
-          data: data2,
-          label: label2,
-          fill: false,
-          borderColor: 'red',
-          borderWidth: 1,
-          radius: 0,
-          lineTension: 0
-        },
-        {
-          data: data3,
-          label: label3,
-          fill: false,
-          borderColor: 'blue',
-          borderWidth: 1,
-          radius: 0,
-          lineTension: 0
-        }
-      ]
-    },
-    options: {
-      scales: {
-        xAxes: [{
-          labels: data1.map((_, index) => index + 1)
-        }]
-      },
-      events: [],
-      animation: {
-        duration: 0
-      }
-    }
-  })
 }
 
 const k = 10
@@ -143,9 +93,11 @@ const setsOfRewards3 = []
 
 range(runs).forEach(() => {
   const armDistributions = makeArmDistributions(k)
-  const setOfRewards1 = bandit(armDistributions, 0, steps)
-  const setOfRewards2 = bandit(armDistributions, 0.01, steps)
-  const setOfRewards3 = bandit(armDistributions, 0.1, steps)
+  const trueValues = armDistributions.map(({ trueValue }) => trueValue)
+  const optimalArm = argmax(trueValues)
+  const setOfRewards1 = bandit(armDistributions, optimalArm, 0, steps)
+  const setOfRewards2 = bandit(armDistributions, optimalArm, 0.01, steps)
+  const setOfRewards3 = bandit(armDistributions, optimalArm, 0.1, steps)
   setsOfRewards1.push(setOfRewards1)
   setsOfRewards2.push(setOfRewards2)
   setsOfRewards3.push(setOfRewards3)
@@ -173,8 +125,39 @@ range(steps).forEach(step => {
   averageRewards3.push(averageReward)
 })
 
-drawChart(
-  averageRewards1, 'greedy',
-  averageRewards2, 'ε = 0.01',
-  averageRewards3, 'ε = 0.1'
-)
+const drawLines = lines => {
+  const makeDataset = line => ({
+    data: line.data,
+    label: line.label,
+    fill: false,
+    borderColor: line.colour,
+    borderWidth: 1,
+    radius: 0
+  })
+  const chartElement = document.getElementById('chart')
+  new Chart(chartElement, {
+    type: 'line',
+    data: {
+      datasets: lines.map(makeDataset)
+    },
+    options: {
+      scales: {
+        xAxes: [{
+          labels: lines[0].data.map((_, index) => index + 1)
+        }]
+      },
+      events: [],
+      animation: {
+        duration: 0
+      }
+    }
+  })
+}
+
+const lines = [
+  { data: averageRewards1, label: 'greedy', colour: 'green' },
+  { data: averageRewards2, label: 'ε = 0.01', colour: 'red' },
+  { data: averageRewards3, label: 'ε = 0.1', colour: 'blue' }
+]
+
+drawLines(lines)
