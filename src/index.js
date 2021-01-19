@@ -57,101 +57,139 @@ const makeArmDistributions = k => {
   return armDistributions
 }
 
-const bandit = (experiment, armDistributions, optimalArm, arms, t) => {
-  const arm = experiment.chooseArm(arms, t, experiment.ns, experiment.qs)
+const bandit = (experiment, armDistributions, optimalArm, t) => {
+  const arm = experiment.actionSelector.selectAction(
+    experiment.actions,
+    experiment.ns,
+    experiment.qs,
+    t)
   const reward = armDistributions[arm].normal()
   const n = experiment.ns[arm] + 1
   experiment.ns[arm] = n
   const oldEstimate = experiment.qs[arm]
-  const newEstimate = oldEstimate + (1 / n) * (reward - oldEstimate)
+  const alpha = experiment.stepSizeCalculator(n)
+  const newEstimate = oldEstimate + alpha * (reward - oldEstimate)
   experiment.qs[arm] = newEstimate
   const isOptimal = arm === optimalArm
   return { reward, isOptimal }
 }
 
-const k = 10
-const runs = 2000
-const steps = 1000
+const K = 10
+const ACTIONS = range(K)
+const RUNS = 2000
+const STEPS = 1000
 
-const greedy = (_arms, _t, _ns, qs) =>
-  argmax(qs)
+class GreedyActionSelector {
+  get name() {
+    return 'greedy'
+  }
 
-const epsilonGreedy = epsilon => (arms, _t, _ns, qs) =>
-  Math.random() < epsilon ? randomChoice(arms) : argmax(qs)
+  selectAction(_actions, _ns, qs, _t) {
+    return argmax(qs)
+  }
+}
 
-const upperConfidenceBound = c => (_arms, t, ns, qs) => {
-  const values = qs.map((q, index) => {
-    const n = ns[index]
-    if (n === 0) return Number.MAX_SAFE_INTEGER
-    return q + c * Math.sqrt(Math.log(t) / n)
-  })
-  return argmax(values)
+class EpsilonGreedyActionSelector {
+  constructor(epsilon) {
+    this.epsilon = epsilon
+  }
+
+  get name() {
+    return `ε-greedy, ε = ${this.epsilon}`
+  }
+
+  selectAction(actions, _ns, qs, _t) {
+    return Math.random() < this.epsilon
+      ? randomChoice(actions)
+      : argmax(qs)
+  }
+}
+
+class UCBActionSelector {
+  constructor(c) {
+    this.c = c
+  }
+
+  get name() {
+    return `UCB, c = ${this.c}`
+  }
+
+  selectAction(_actions, ns, qs, t) {
+    return argmax(this.ucb(ns, qs, t))
+  }
+
+  ucb(ns, qs, t) {
+    return qs.map((q, index) => {
+      const n = ns[index]
+      if (n === 0) return Number.MAX_VALUE
+      return q + this.c * Math.sqrt(Math.log(t) / n)
+    })
+  }
+}
+
+const constantStepSizeCalculator = stepSize => _n => stepSize
+const decayingStepSizeCalculator = n => 1 / n
+
+// const stepSize = constantStepSize(0.1)
+const stepSizeCalculator = decayingStepSizeCalculator
+
+class Experiment {
+  constructor(actions, actionSelector, stepSizeCalculator, colour) {
+    this.actions = actions
+    this.actionSelector = actionSelector
+    this.stepSizeCalculator = stepSizeCalculator
+    this.colour = colour
+    this.ns = []
+    this.qs = []
+  }
+
+  reset() {
+    this.ns = Array(this.actions.length).fill(0)
+    this.qs = Array(this.actions.length).fill(0)
+  }
 }
 
 const experiments = [
-  {
-    label: 'greedy',
-    colour: 'green',
-    chooseArm: greedy,
-    ns: [],
-    qs: []
-  },
-  {
-    label: 'ε-greedy, ε = 0.01',
-    colour: 'red',
-    chooseArm: epsilonGreedy(0.01),
-    ns: [],
-    qs: []
-  },
-  {
-    label: 'ε-greedy, ε = 0.1',
-    colour: 'blue',
-    chooseArm: epsilonGreedy(0.1),
-    ns: [],
-    qs: []
-  },
-  {
-    label: 'UCB, c = 2',
-    colour: 'purple',
-    chooseArm: upperConfidenceBound(2),
-    ns: [],
-    qs: []
-  }
+  new Experiment(ACTIONS, new GreedyActionSelector(), stepSizeCalculator, 'green'),
+  new Experiment(ACTIONS, new EpsilonGreedyActionSelector(0.01), stepSizeCalculator, 'red'),
+  new Experiment(ACTIONS, new EpsilonGreedyActionSelector(0.1), stepSizeCalculator, 'blue'),
+  new Experiment(ACTIONS, new UCBActionSelector(2), stepSizeCalculator, 'purple')
 ]
 
 const results = experiments.map(() => ({
-  runningAverageReward: Array(steps).fill(0),
-  runningAveragePercentOptimalAction: Array(steps).fill(0)
+  runningAverageReward: Array(STEPS).fill(0),
+  runningAveragePercentOptimalAction: Array(STEPS).fill(0)
 }))
 
-const runExperiments = (experiments, armDistributions, optimalArm, arms, steps) => {
-  for (const experiment of experiments) {
-    experiment.ns = Array(k).fill(0)
-    experiment.qs = Array(k).fill(0)
-  }
+const runExperiments = (experiments, armDistributions, steps) => {
+  experiments.forEach(experiment => experiment.reset())
+  const trueValues = armDistributions.map(({ trueValue }) => trueValue)
+  const optimalArm = argmax(trueValues)
   return range(steps).map(step =>
-    experiments.map(experiment => bandit(experiment, armDistributions, optimalArm, arms, step + 1))
+    experiments.map(experiment => bandit(experiment, armDistributions, optimalArm, step + 1))
   )
 }
 
-range(runs).forEach(run => {
+range(RUNS).forEach(run => {
   const n = run + 1
-  const armDistributions = makeArmDistributions(k)
-  const arms = range(k)
-  const trueValues = armDistributions.map(({ trueValue }) => trueValue)
-  const optimalArm = argmax(trueValues)
-  const stepResults = runExperiments(experiments, armDistributions, optimalArm, arms, steps)
+  const armDistributions = makeArmDistributions(K)
+  const stepResults = runExperiments(experiments, armDistributions, STEPS)
   stepResults.forEach((stepResult, step) => {
     stepResult.forEach(({ reward, isOptimal }, experimentIndex) => {
+      const experimentResults = results[experimentIndex]
 
-      const oldAverage1 = results[experimentIndex].runningAverageReward[step]
-      const newAverage1 = oldAverage1 + (1 / n) * (reward - oldAverage1)
-      results[experimentIndex].runningAverageReward[step] = newAverage1
+      {
+        const oldAverage = experimentResults.runningAverageReward[step]
+        const newAverage = oldAverage + (1 / n) * (reward - oldAverage)
+        experimentResults.runningAverageReward[step] = newAverage
+      }
 
-      const percentOptimalAction = isOptimal ? 100 : 0
-      const oldAverage2 = results[experimentIndex].runningAveragePercentOptimalAction[step]
-      const newAverage2 = oldAverage2 + (1 / n) * (percentOptimalAction - oldAverage2)
-      results[experimentIndex].runningAveragePercentOptimalAction[step] = newAverage2
+      {
+        const percentOptimalAction = isOptimal ? 100 : 0
+        const oldAverage = experimentResults.runningAveragePercentOptimalAction[step]
+        const newAverage = oldAverage + (1 / n) * (percentOptimalAction - oldAverage)
+        experimentResults.runningAveragePercentOptimalAction[step] = newAverage
+      }
     })
   })
 })
@@ -185,14 +223,14 @@ const drawLines = (chartElement, lines) => {
 }
 
 const lines1 = experiments.map((experiment, index) => ({
-  label: experiment.label,
+  label: experiment.actionSelector.name,
   colour: experiment.colour,
   data: results[index].runningAverageReward
 }))
 drawLines('chart1', lines1)
 
 const lines2 = experiments.map((experiment, index) => ({
-  label: experiment.label,
+  label: experiment.actionSelector.name,
   colour: experiment.colour,
   data: results[index].runningAveragePercentOptimalAction
 }))
