@@ -130,30 +130,32 @@ class UCBActionSelector {
 const constantStepSizeCalculator = stepSize => _n => stepSize
 const decayingStepSizeCalculator = n => 1 / n
 
-// const stepSize = constantStepSize(0.1)
-const stepSizeCalculator = decayingStepSizeCalculator
+const defaultStepSizeCalculator = decayingStepSizeCalculator
 
 class Experiment {
-  constructor(actions, actionSelector, stepSizeCalculator, colour) {
+  constructor(actions, actionSelector, stepSizeCalculator, colour, initialValue = 0) {
     this.actions = actions
     this.actionSelector = actionSelector
     this.stepSizeCalculator = stepSizeCalculator
     this.colour = colour
+    this.initialValue = initialValue
     this.ns = []
     this.qs = []
   }
 
   reset() {
     this.ns = Array(this.actions.length).fill(0)
-    this.qs = Array(this.actions.length).fill(0)
+    this.qs = Array(this.actions.length).fill(this.initialValue)
   }
 }
 
 const experiments = [
-  new Experiment(ACTIONS, new GreedyActionSelector(), stepSizeCalculator, 'green'),
-  new Experiment(ACTIONS, new EpsilonGreedyActionSelector(0.01), stepSizeCalculator, 'red'),
-  new Experiment(ACTIONS, new EpsilonGreedyActionSelector(0.1), stepSizeCalculator, 'blue'),
-  new Experiment(ACTIONS, new UCBActionSelector(2), stepSizeCalculator, 'purple')
+  new Experiment(ACTIONS, new GreedyActionSelector(), defaultStepSizeCalculator, 'green'),
+  new Experiment(ACTIONS, new EpsilonGreedyActionSelector(0.01), defaultStepSizeCalculator, 'red'),
+  new Experiment(ACTIONS, new EpsilonGreedyActionSelector(0.1), defaultStepSizeCalculator, 'blue'),
+  new Experiment(ACTIONS, new UCBActionSelector(2), defaultStepSizeCalculator, 'purple'),
+  new Experiment(ACTIONS, new GreedyActionSelector(), constantStepSizeCalculator(0.1), 'cyan', 5),
+  new Experiment(ACTIONS, new EpsilonGreedyActionSelector(0.1), constantStepSizeCalculator(0.1), 'grey', 0)
 ]
 
 const results = experiments.map(() => ({
