@@ -15,6 +15,11 @@ export const drawDiagram = (chartElement, lines) => {
       datasets: lines.map(makeDataset)
     },
     options: {
+      legend: {
+        labels: {
+          boxWidth: 20
+        }
+      },
       scales: {
         xAxes: [{
           labels: lines[0].data.map((_, index) => index + 1)
