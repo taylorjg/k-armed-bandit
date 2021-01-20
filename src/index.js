@@ -7,6 +7,8 @@ import * as D from './diagrams'
 import * as L from './logic'
 import * as U from './utils'
 
+import worker from 'workerize-loader!./worker' // eslint-disable-line import/no-webpack-loader-syntax
+
 ReactDOM.render(
   <React.StrictMode>
     <App />
@@ -66,3 +68,13 @@ const lines2 = experiments.map((experiment, index) => ({
   data: results[index].runningAveragePercentOptimalAction
 }))
 D.drawDiagram('chart2', lines2)
+
+const onMessage = message => {
+  if (message.data.type === 'addNumbersResult') {
+    console.log(`[onMessage] message.data: ${JSON.stringify(message.data)}`)
+  }
+}
+
+const workerInstance = worker()
+workerInstance.addEventListener('message', onMessage)
+workerInstance.addNumbers(1, 2)
