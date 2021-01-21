@@ -1,6 +1,7 @@
 import { Chart } from 'chart.js'
 
-export const drawDiagram = (chartElement, lines) => {
+export const drawDiagram = (chartElement, lines, yAxisOptions) => {
+
   const makeDataset = line => ({
     data: line.data,
     label: line.label,
@@ -9,6 +10,16 @@ export const drawDiagram = (chartElement, lines) => {
     borderWidth: 1,
     radius: 0
   })
+
+  const maybeTicks = yAxisOptions.min !== undefined && yAxisOptions.max !== undefined
+    ? {
+      ticks: {
+        min: yAxisOptions.min,
+        max: yAxisOptions.max
+      }
+    }
+    : undefined
+
   new Chart(chartElement, {
     type: 'line',
     data: {
@@ -22,7 +33,26 @@ export const drawDiagram = (chartElement, lines) => {
       },
       scales: {
         xAxes: [{
-          labels: lines[0].data.map((_, index) => index + 1)
+          scaleLabel: {
+            display: true,
+            labelString: 'Steps'
+          },
+          labels: lines[0].data.map((_, index) => index + 1),
+          ticks: {
+            autoSkip: false,
+            maxRotation: 0,
+            callback: tick => {
+              if (tick === 1) return 1
+              return tick % 250 === 0 ? tick : null
+            }
+          }
+        }],
+        yAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: yAxisOptions.label
+          },
+          ...maybeTicks
         }]
       },
       events: [],

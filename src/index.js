@@ -72,14 +72,20 @@ const drawDiagrams = results => {
     colour: experiment.colour,
     data: results[experimentIndex].averageRewardsPerStep
   }))
-  D.drawDiagram('chart1', lines1)
+  D.drawDiagram('chart1', lines1, {
+    label: 'Average reward'
+  })
 
   const lines2 = experiments.map((experiment, experimentIndex) => ({
     label: experiment.name,
     colour: experiment.colour,
     data: results[experimentIndex].averagePercentOptimalActionsPerStep
   }))
-  D.drawDiagram('chart2', lines2)
+  D.drawDiagram('chart2', lines2, {
+    label: '% Optimal action',
+    min: 0,
+    max: 100
+  })
 }
 
 const workerResults = []
