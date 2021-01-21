@@ -7,7 +7,8 @@ import * as D from './diagrams'
 import * as L from './logic'
 import * as U from './utils'
 
-import worker from 'workerize-loader!./worker' // eslint-disable-line import/no-webpack-loader-syntax
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import worker from 'workerize-loader!./worker'
 
 ReactDOM.render(
   <React.StrictMode>
@@ -48,17 +49,17 @@ const experimentsConfig = [
     stepSizeCalculator: ['decayingStepSizeCalculator'],
     colour: 'purple'
   },
-  {
-    actionSelector: ['GreedyActionSelector'],
-    stepSizeCalculator: ['constantStepSizeCalculator', 0.1],
-    colour: 'cyan',
-    initialValue: 5
-  },
-  {
-    actionSelector: ['EpsilonGreedyActionSelector', 0.1],
-    stepSizeCalculator: ['constantStepSizeCalculator', 0.1],
-    colour: 'grey'
-  }
+  // {
+  //   actionSelector: ['GreedyActionSelector'],
+  //   stepSizeCalculator: ['constantStepSizeCalculator', 0.1],
+  //   colour: 'cyan',
+  //   initialValue: 5
+  // },
+  // {
+  //   actionSelector: ['EpsilonGreedyActionSelector', 0.1],
+  //   stepSizeCalculator: ['constantStepSizeCalculator', 0.1],
+  //   colour: 'grey'
+  // }
 ]
 
 const experiments = experimentsConfig.map(experimentConfig =>
