@@ -61,21 +61,22 @@ const experimentsConfig = [
   }
 ]
 
-const experiments = experimentsConfig.map(experimentConfig => L.makeExperiment(experimentConfig, ACTIONS))
+const experiments = experimentsConfig.map(experimentConfig =>
+  L.makeExperiment(experimentConfig, ACTIONS))
 
 const drawDiagrams = results => {
 
   const lines1 = experiments.map((experiment, experimentIndex) => ({
-    label: experiment.actionSelector.name,
+    label: experiment.name,
     colour: experiment.colour,
-    data: results[experimentIndex].runningAverageReward
+    data: results[experimentIndex].averageRewardsPerStep
   }))
   D.drawDiagram('chart1', lines1)
 
   const lines2 = experiments.map((experiment, experimentIndex) => ({
-    label: experiment.actionSelector.name,
+    label: experiment.name,
     colour: experiment.colour,
-    data: results[experimentIndex].runningAveragePercentOptimalAction
+    data: results[experimentIndex].averagePercentOptimalActionsPerStep
   }))
   D.drawDiagram('chart2', lines2)
 }
@@ -83,32 +84,54 @@ const drawDiagrams = results => {
 const workerResults = []
 let runs = 0
 
+const pluckValueAtStep = (propName, workerResults, experimentIndex, step) =>
+  workerResults.map(wr => wr[experimentIndex][propName][step])
+
+const pluckValue = (propName, workerResults, experimentIndex) =>
+  U.range(STEPS).map(step => pluckValueAtStep(propName, workerResults, experimentIndex, step))
+
+const averageAcrossWorkers = (propName, workerResults, experimentIndex) =>
+  pluckValue(propName, workerResults, experimentIndex).map(U.average)
+
+const combineResults = workerResults => {
+  const finalResults = U.range(experiments.length).map(experimentIndex => {
+    return {
+      averageRewardsPerStep: averageAcrossWorkers(
+        'averageRewards',
+        workerResults,
+        experimentIndex),
+      averagePercentOptimalActionsPerStep: averageAcrossWorkers(
+        'averagePercentOptimalActions',
+        workerResults,
+        experimentIndex)
+    }
+  })
+  return finalResults
+}
+
 const onMessage = message => {
-  if (message.data.type === 'fredRun') {
+
+  if (message.data.type === 'runExperimentsRunCompleted') {
     runs += 1
-    console.log(`[onMessage] workerIndex: ${message.data.workerIndex}; runs: ${runs}`)
+    console.log(`[onMessage runExperimentsRunCompleted] workerIndex: ${message.data.workerIndex}; runs: ${runs}`)
   }
-  if (message.data.type === 'fredResults') {
-    console.log(`[onMessage] workerIndex: ${message.data.workerIndex}`)
+
+  if (message.data.type === 'runExperimentsResults') {
+    console.log(`[onMessage runExperimentsResults] workerIndex: ${message.data.workerIndex}`)
     workerResults.push(message.data.results)
     if (workerResults.length === NUM_WORKERS) {
-      const results = U.range(experiments.length).map(experimentIndex => {
-        const xss = U.range(STEPS).map(step => workerResults.map(wr => wr[experimentIndex].runningAverageReward[step]))
-        const yss = U.range(STEPS).map(step => workerResults.map(wr => wr[experimentIndex].runningAveragePercentOptimalAction[step]))
-        return {
-          runningAverageReward: xss.map(U.average),
-          runningAveragePercentOptimalAction: yss.map(U.average)
-        }
-      })
-      drawDiagrams(results)
+      const finalResults = combineResults(workerResults)
+      drawDiagrams(finalResults)
     }
   }
 }
 
 const workerInstances = U.range(NUM_WORKERS).map(worker)
-workerInstances.forEach(workerInstance => workerInstance.addEventListener('message', onMessage))
 
-const fredMessage = {
+workerInstances.forEach(workerInstance =>
+  workerInstance.addEventListener('message', onMessage))
+
+const workerMessage = {
   K,
   ACTIONS,
   RUNS: RUNS / NUM_WORKERS,
@@ -116,4 +139,5 @@ const fredMessage = {
   experimentsConfig
 }
 
-workerInstances.forEach((workerInstance, workerIndex) => workerInstance.fred({ ...fredMessage, workerIndex }))
+workerInstances.forEach((workerInstance, workerIndex) =>
+  workerInstance.runExperiments(workerMessage, workerIndex))

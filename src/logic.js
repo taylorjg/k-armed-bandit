@@ -63,6 +63,10 @@ export class Experiment {
     this.qs = []
   }
 
+  get name() {
+    return this.actionSelector.name
+  }
+
   reset() {
     this.ns = Array(this.actions.length).fill(0)
     this.qs = Array(this.actions.length).fill(this.initialValue)
