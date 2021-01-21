@@ -1,5 +1,6 @@
 {
   "name": "k-armed-bandit",
+  "description": "Web visualisation of the k-armed bandit problem",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
