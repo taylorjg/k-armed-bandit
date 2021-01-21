@@ -17,3 +17,9 @@ export const argmax = xs => {
   })
   return ties.length === 1 ? ties[0] : randomChoice(ties)
 }
+
+export const average = xs => {
+  const sum = xs.reduce((acc, x) => acc + x, 0)
+  const count = xs.length
+  return sum / count
+}

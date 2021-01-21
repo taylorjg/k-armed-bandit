@@ -25,56 +25,95 @@ const K = 10
 const ACTIONS = U.range(K)
 const RUNS = 2000
 const STEPS = 1000
+const NUM_WORKERS = 4
 
-const experiments = [
-  new L.Experiment(ACTIONS, new L.GreedyActionSelector(), L.decayingStepSizeCalculator, 'green'),
-  new L.Experiment(ACTIONS, new L.EpsilonGreedyActionSelector(0.01), L.decayingStepSizeCalculator, 'red'),
-  new L.Experiment(ACTIONS, new L.EpsilonGreedyActionSelector(0.1), L.decayingStepSizeCalculator, 'blue'),
-  new L.Experiment(ACTIONS, new L.UCBActionSelector(2), L.decayingStepSizeCalculator, 'purple'),
-  new L.Experiment(ACTIONS, new L.GreedyActionSelector(), L.constantStepSizeCalculator(0.1), 'cyan', 5),
-  new L.Experiment(ACTIONS, new L.EpsilonGreedyActionSelector(0.1), L.constantStepSizeCalculator(0.1), 'grey', 0)
+const experimentsConfig = [
+  {
+    actionSelector: ['GreedyActionSelector'],
+    stepSizeCalculator: ['decayingStepSizeCalculator'],
+    colour: 'green'
+  },
+  {
+    actionSelector: ['EpsilonGreedyActionSelector', 0.01],
+    stepSizeCalculator: ['decayingStepSizeCalculator'],
+    colour: 'red'
+  },
+  {
+    actionSelector: ['EpsilonGreedyActionSelector', 0.1],
+    stepSizeCalculator: ['decayingStepSizeCalculator'],
+    colour: 'blue'
+  },
+  {
+    actionSelector: ['UCBActionSelector', 2],
+    stepSizeCalculator: ['decayingStepSizeCalculator'],
+    colour: 'purple'
+  },
+  {
+    actionSelector: ['GreedyActionSelector'],
+    stepSizeCalculator: ['constantStepSizeCalculator', 0.1],
+    colour: 'cyan',
+    initialValue: 5
+  },
+  {
+    actionSelector: ['EpsilonGreedyActionSelector', 0.1],
+    stepSizeCalculator: ['constantStepSizeCalculator', 0.1],
+    colour: 'grey'
+  }
 ]
 
-const results = experiments.map(() => new L.ExperimentResults(STEPS))
+const experiments = experimentsConfig.map(experimentConfig => L.makeExperiment(experimentConfig, ACTIONS))
 
-const runExperiments = (testBed, experiments, steps) => {
-  experiments.forEach(experiment => experiment.reset())
-  return U.range(steps).map(step =>
-    experiments.map(experiment => L.bandit(testBed, experiment, step + 1))
-  )
+const drawDiagrams = results => {
+
+  const lines1 = experiments.map((experiment, experimentIndex) => ({
+    label: experiment.actionSelector.name,
+    colour: experiment.colour,
+    data: results[experimentIndex].runningAverageReward
+  }))
+  D.drawDiagram('chart1', lines1)
+
+  const lines2 = experiments.map((experiment, experimentIndex) => ({
+    label: experiment.actionSelector.name,
+    colour: experiment.colour,
+    data: results[experimentIndex].runningAveragePercentOptimalAction
+  }))
+  D.drawDiagram('chart2', lines2)
 }
 
-U.range(RUNS).forEach(run => {
-  const n = run + 1
-  const testBed = new L.TestBed(K)
-  const stepResults = runExperiments(testBed, experiments, STEPS)
-  stepResults.forEach((stepResult, step) => {
-    stepResult.forEach(({ reward, isOptimal }, experimentIndex) => {
-      results[experimentIndex].update(step, n, reward, isOptimal)
-    })
-  })
-})
-
-const lines1 = experiments.map((experiment, index) => ({
-  label: experiment.actionSelector.name,
-  colour: experiment.colour,
-  data: results[index].runningAverageReward
-}))
-D.drawDiagram('chart1', lines1)
-
-const lines2 = experiments.map((experiment, index) => ({
-  label: experiment.actionSelector.name,
-  colour: experiment.colour,
-  data: results[index].runningAveragePercentOptimalAction
-}))
-D.drawDiagram('chart2', lines2)
+const workerResults = []
+let runs = 0
 
 const onMessage = message => {
-  if (message.data.type === 'addNumbersResult') {
-    console.log(`[onMessage] message.data: ${JSON.stringify(message.data)}`)
+  if (message.data.type === 'fredRun') {
+    runs += 1
+    console.log(`[onMessage] workerIndex: ${message.data.workerIndex}; runs: ${runs}`)
+  }
+  if (message.data.type === 'fredResults') {
+    console.log(`[onMessage] workerIndex: ${message.data.workerIndex}`)
+    workerResults.push(message.data.results)
+    if (workerResults.length === NUM_WORKERS) {
+      const results = U.range(experiments.length).map(experimentIndex => {
+        const xss = U.range(STEPS).map(step => workerResults.map(wr => wr[experimentIndex].runningAverageReward[step]))
+        const yss = U.range(STEPS).map(step => workerResults.map(wr => wr[experimentIndex].runningAveragePercentOptimalAction[step]))
+        return {
+          runningAverageReward: xss.map(U.average),
+          runningAveragePercentOptimalAction: yss.map(U.average)
+        }
+      })
+      drawDiagrams(results)
+    }
   }
 }
 
-const workerInstance = worker()
-workerInstance.addEventListener('message', onMessage)
-workerInstance.addNumbers(1, 2)
+const workerInstances = U.range(NUM_WORKERS).map(worker)
+workerInstances.forEach(workerInstance => workerInstance.addEventListener('message', onMessage))
+
+const fredMessage = {
+  K,
+  ACTIONS,
+  RUNS: RUNS / NUM_WORKERS,
+  STEPS,
+  experimentsConfig
+}
+
+workerInstances.forEach((workerInstance, workerIndex) => workerInstance.fred({ ...fredMessage, workerIndex }))

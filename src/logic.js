@@ -146,3 +146,30 @@ export const bandit = (testBed, experiment, t) => {
   const isOptimal = arm === testBed.optimalArm
   return { reward, isOptimal }
 }
+
+export const makeActionSelector = experimentConfig => {
+  const [actionSelectorName, ...args] = experimentConfig.actionSelector
+  switch (actionSelectorName) {
+    case 'GreedyActionSelector': return new GreedyActionSelector(...args)
+    case 'EpsilonGreedyActionSelector': return new EpsilonGreedyActionSelector(...args)
+    case 'UCBActionSelector': return new UCBActionSelector(...args)
+    default: throw new Error(`Unexpected actionSelectorName, "${actionSelectorName}"`)
+  }
+}
+
+export const makeStepSizeCalculator = experimentConfig => {
+  const [stepSizeCalculatorName, ...args] = experimentConfig.stepSizeCalculator
+  switch (stepSizeCalculatorName) {
+    case 'decayingStepSizeCalculator': return decayingStepSizeCalculator
+    case 'constantStepSizeCalculator': return constantStepSizeCalculator(...args)
+    default: throw new Error(`Unexpected stepSizeCalculatorName, "${stepSizeCalculatorName}"`)
+  }
+}
+
+export const makeExperiment = (experimentConfig, actions) =>
+  new Experiment(
+    actions,
+    makeActionSelector(experimentConfig),
+    makeStepSizeCalculator(experimentConfig),
+    experimentConfig.colour,
+    experimentConfig.initialValue)
