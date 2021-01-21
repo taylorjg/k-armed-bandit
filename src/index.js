@@ -85,28 +85,26 @@ const drawDiagrams = results => {
 const workerResults = []
 let runs = 0
 
-const pluckValueAtStep = (propName, workerResults, experimentIndex, step) =>
-  workerResults.map(wr => wr[experimentIndex][propName][step])
+const pluckValueAtStep = (propertyName, workerResults, experimentIndex, step) =>
+  workerResults.map(wr => wr[experimentIndex][propertyName][step])
 
-const pluckValue = (propName, workerResults, experimentIndex) =>
-  U.range(STEPS).map(step => pluckValueAtStep(propName, workerResults, experimentIndex, step))
+const pluckValuesAtAllSteps = (propertyName, workerResults, experimentIndex) =>
+  U.range(STEPS).map(step => pluckValueAtStep(propertyName, workerResults, experimentIndex, step))
 
-const averageAcrossWorkers = (propName, workerResults, experimentIndex) =>
-  pluckValue(propName, workerResults, experimentIndex).map(U.average)
+const averageAcrossWorkers = (propertyName, workerResults, experimentIndex) =>
+  pluckValuesAtAllSteps(propertyName, workerResults, experimentIndex).map(U.average)
 
-const combineResults = workerResults => {
-  const finalResults = U.range(experiments.length).map(experimentIndex => {
-    return {
-      averageRewardsPerStep: averageAcrossWorkers(
-        'averageRewards',
-        workerResults,
-        experimentIndex),
-      averagePercentOptimalActionsPerStep: averageAcrossWorkers(
-        'averagePercentOptimalActions',
-        workerResults,
-        experimentIndex)
-    }
-  })
+const combineWorkerResults = workerResults => {
+  const finalResults = U.range(experiments.length).map(experimentIndex => ({
+    averageRewardsPerStep: averageAcrossWorkers(
+      'averageRewards',
+      workerResults,
+      experimentIndex),
+    averagePercentOptimalActionsPerStep: averageAcrossWorkers(
+      'averagePercentOptimalActions',
+      workerResults,
+      experimentIndex)
+  }))
   return finalResults
 }
 
@@ -121,7 +119,7 @@ const onMessage = message => {
     console.log(`[onMessage runExperimentsResults] workerIndex: ${message.data.workerIndex}`)
     workerResults.push(message.data.results)
     if (workerResults.length === NUM_WORKERS) {
-      const finalResults = combineResults(workerResults)
+      const finalResults = combineWorkerResults(workerResults)
       drawDiagrams(finalResults)
     }
   }
