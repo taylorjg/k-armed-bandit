@@ -1,7 +1,7 @@
 import * as L from './logic'
 import * as U from './utils'
 
-export const runExperiments = async (message, workerIndex) => {
+export const runExperiments = (message, workerIndex) => {
 
   const startTime = performance.now()
 
