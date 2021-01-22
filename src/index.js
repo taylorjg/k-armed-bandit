@@ -146,3 +146,8 @@ const workerMessage = {
 
 workerInstances.forEach((workerInstance, workerIndex) =>
   workerInstance.runExperiments(workerMessage, workerIndex))
+
+drawDiagrams(experiments.map(() => ({
+  averageRewardsPerStep: [],
+  averagePercentOptimalActionsPerStep: []
+})))
