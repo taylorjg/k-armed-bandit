@@ -99,11 +99,6 @@ const MainView = () => {
       colour: 'green'
     },
     {
-      actionSelector: ['GreedyActionSelector'],
-      stepSizeCalculator: ['decayingStepSizeCalculator'],
-      colour: 'green'
-    },
-    {
       actionSelector: ['EpsilonGreedyActionSelector', 0.01],
       stepSizeCalculator: ['decayingStepSizeCalculator'],
       colour: 'red'
@@ -179,7 +174,7 @@ const MainView = () => {
 
   return (
     <div className="mainview-layout">
-      <div>[MainView] runsCompletedCount: {runsCompletedCount}</div>
+      <div>runsCompletedCount: {runsCompletedCount}</div>
       <div className="chart-wrapper">
         <canvas id="chart1"></canvas>
       </div>
