@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/k-armed-bandit/static/css/main.5cee9862.chunk.css",
-    "main.js": "/k-armed-bandit/static/js/main.710a1e91.chunk.js",
-    "main.js.map": "/k-armed-bandit/static/js/main.710a1e91.chunk.js.map",
+    "main.js": "/k-armed-bandit/static/js/main.c8eab496.chunk.js",
+    "main.js.map": "/k-armed-bandit/static/js/main.c8eab496.chunk.js.map",
     "runtime-main.js": "/k-armed-bandit/static/js/runtime-main.70d32178.js",
     "runtime-main.js.map": "/k-armed-bandit/static/js/runtime-main.70d32178.js.map",
     "static/js/2.29849470.chunk.js": "/k-armed-bandit/static/js/2.29849470.chunk.js",
@@ -19,6 +19,6 @@
     "static/js/runtime-main.70d32178.js",
     "static/js/2.29849470.chunk.js",
     "static/css/main.5cee9862.chunk.css",
-    "static/js/main.710a1e91.chunk.js"
+    "static/js/main.c8eab496.chunk.js"
   ]
 }
