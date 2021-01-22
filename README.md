@@ -11,7 +11,7 @@ without having to eject the React app.
 
 # TODO
 
-* Deploy to gh-pages branch
+* ~~Deploy to gh-pages branch~~
 * The main part of the code is vanilla JS/HTML inside a React app. This code needs to be moved into React components.
 * Add UI support for changing various configuration values:
   * Number of web workers (currently 4)
