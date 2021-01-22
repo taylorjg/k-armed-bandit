@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import * as D from './diagrams'
 import * as L from './logic'
 import * as U from './utils'
@@ -122,6 +122,7 @@ const MainView = () => {
   const workerResultsRef = useRef([])
 
   const [runsCompletedCount, setRunsCompletedCount] = useState(0)
+  const [running, setRunning] = useState(false)
 
   const onMessage = message => {
     switch (message.data.type) {
@@ -135,6 +136,7 @@ const MainView = () => {
         if (workerResultsRef.current.length === NUM_WORKERS) {
           const finalResults = combineWorkerResults(workerResultsRef.current)
           drawDiagrams(experiments, finalResults)
+          setRunning(false)
         }
         break
 
@@ -151,7 +153,8 @@ const MainView = () => {
     return workerInstances
   })
 
-  useEffect(() => {
+  const run = useCallback(() => {
+    setRunning(true)
     setRunsCompletedCount(0)
     workerResultsRef.current = []
 
@@ -172,9 +175,16 @@ const MainView = () => {
     })))
   }, [experimentsConfig, experiments, workerInstances])
 
+  useEffect(run, [run])
+
+  const onRun = () => run()
+
   return (
     <div className="mainview-layout">
-      <div>runsCompletedCount: {runsCompletedCount}</div>
+      <div className="controls">
+        <div>Runs completed: {runsCompletedCount}</div>
+        <button onClick={onRun} disabled={running}>Run</button>
+      </div>
       <div className="chart-wrapper">
         <canvas id="chart1"></canvas>
       </div>

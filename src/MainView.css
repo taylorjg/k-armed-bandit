@@ -7,6 +7,16 @@
   align-items: center;
 }
 
+.controls {
+  display: flex;
+  justify-content: space-between;
+  width: 50%;
+}
+
+.controls button {
+  margin-left: .5rem;
+}
+
 .chart-wrapper {
   width: 50%;
 }

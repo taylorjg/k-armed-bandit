@@ -20,7 +20,7 @@ without having to eject the React app.
   * Number of steps (currently 1000)
   * Epsilon
   * etc.
-* Add a button to re-run the whole thing
+* ~~Add a button to re-run the whole thing~~
 * Add a progress bar during the number crunching
 
 # Links
