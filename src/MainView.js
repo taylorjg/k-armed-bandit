@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { ProgressBar } from 'react-bootstrap'
+import { useCallbackWrapper } from './customHooks'
 import * as D from './diagrams'
 import * as L from './logic'
 import * as U from './utils'
@@ -123,6 +124,7 @@ const MainView = () => {
   const workerResultsRef = useRef([])
 
   const [runsCompletedCount, setRunsCompletedCount] = useState(0)
+  const [workersCompletedCount, setWorkersCompletedCount] = useState(0)
   const [running, setRunning] = useState(false)
 
   const onMessage = message => {
@@ -133,12 +135,8 @@ const MainView = () => {
         break
 
       case 'runExperimentsResults':
+        setWorkersCompletedCount(count => count + 1)
         workerResultsRef.current.push(message.data.results)
-        if (workerResultsRef.current.length === NUM_WORKERS) {
-          const finalResults = combineWorkerResults(workerResultsRef.current)
-          drawDiagrams(experiments, finalResults)
-          setRunning(false)
-        }
         break
 
       case 'RPC':
@@ -147,16 +145,27 @@ const MainView = () => {
     }
   }
 
+  useEffect(() => {
+    if (runsCompletedCount === RUNS && workersCompletedCount === NUM_WORKERS) {
+      const finalResults = combineWorkerResults(workerResultsRef.current)
+      drawDiagrams(experiments, finalResults)
+      setRunning(false)
+    }
+  }, [experiments, runsCompletedCount, workersCompletedCount])
+
+  const onMessageCallbackWrapper = useCallbackWrapper(onMessage)
+
   const [workerInstances] = useState(() => {
     const workerInstances = U.range(NUM_WORKERS).map(worker)
     workerInstances.forEach(workerInstance =>
-      workerInstance.addEventListener('message', onMessage))
+      workerInstance.addEventListener('message', onMessageCallbackWrapper))
     return workerInstances
   })
 
   const run = useCallback(() => {
     setRunning(true)
     setRunsCompletedCount(0)
+    setWorkersCompletedCount(0)
     workerResultsRef.current = []
 
     const workerMessage = {
