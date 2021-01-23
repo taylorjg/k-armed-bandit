@@ -21,7 +21,7 @@ without having to eject the React app.
   * Epsilon
   * etc.
 * ~~Add a button to re-run the whole thing~~
-* Add a progress bar during the number crunching
+* ~~Add a progress bar during the number crunching~~
 
 # Links
 

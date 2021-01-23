@@ -9,12 +9,18 @@
 
 .controls {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   width: 50%;
 }
 
-.controls button {
+.controls > div {
+  flex-grow: 1;
   margin-left: .5rem;
+  margin-right: 1rem;
+}
+
+.controls .progress-bar[aria-valuenow="0"] {
+  transition: none;
 }
 
 .chart-wrapper {

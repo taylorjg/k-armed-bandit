@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { ProgressBar } from 'react-bootstrap'
 import * as D from './diagrams'
 import * as L from './logic'
 import * as U from './utils'
@@ -182,7 +183,8 @@ const MainView = () => {
   return (
     <div className="mainview-layout">
       <div className="controls">
-        <div>Runs completed: {runsCompletedCount}</div>
+        <span>Runs completed:</span>
+        <ProgressBar min={0} max={RUNS} now={runsCompletedCount} />
         <button onClick={onRun} disabled={running}>Run</button>
       </div>
       <div className="chart-wrapper">
