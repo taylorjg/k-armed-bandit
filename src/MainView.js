@@ -3,9 +3,11 @@ import { ProgressBar } from 'react-bootstrap'
 import SlidingPane from 'react-sliding-pane'
 import { useCallbackWrapper } from './customHooks'
 import SettingsPane from './SettingsPane'
+import * as C from './constants'
 import * as D from './diagrams'
 import * as L from './logic'
 import * as U from './utils'
+import { AiOutlineSetting } from 'react-icons/ai'
 import './MainView.css'
 import 'react-sliding-pane/dist/react-sliding-pane.css'
 
@@ -89,24 +91,13 @@ const drawDiagrams = (experiments, results) => {
 
 // --------------------------------------------------------------------------------
 
-// const MIN_WEB_WORKERS = 1
-const MAX_WEB_WORKERS = 8
-const INITIAL_WEB_WORKERS = 4
-
-// const MIN_K = 2
-const MAX_K = 10
-const INITIAL_K = MAX_K
-
-const INITIAL_RUNS = 2000
-const INITIAL_STEPS = 1000
-
 const MainView = () => {
 
   const [settings, setSettings] = useState({
-    webWorkers: INITIAL_WEB_WORKERS,
-    k: INITIAL_K,
-    runs: INITIAL_RUNS,
-    steps: INITIAL_STEPS
+    webWorkers: C.INITIAL_WEB_WORKERS,
+    k: C.INITIAL_K,
+    runs: C.INITIAL_RUNS,
+    steps: C.INITIAL_STEPS
   })
 
   const [experimentsConfig] = useState(() => [
@@ -174,7 +165,7 @@ const MainView = () => {
   const onMessageCallbackWrapper = useCallbackWrapper(onMessage)
 
   const [workerInstances] = useState(() => {
-    const workerInstances = U.range(MAX_WEB_WORKERS).map(worker)
+    const workerInstances = U.range(C.MAX_WEB_WORKERS).map(worker)
     workerInstances.forEach(workerInstance =>
       workerInstance.addEventListener('message', onMessageCallbackWrapper))
     return workerInstances
@@ -238,7 +229,9 @@ const MainView = () => {
         <span>Runs completed:</span>
         <ProgressBar min={0} max={settings.runs} now={runsCompletedCount} />
         <button onClick={onRun} disabled={running}>Run</button>
-        <button onClick={openSettingsPane} disabled={running}>Settings</button>
+        <button onClick={openSettingsPane} disabled={running}>
+          <AiOutlineSetting />
+        </button>
       </div>
       <div className="chart-wrapper">
         <canvas id="chart1"></canvas>

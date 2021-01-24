@@ -23,3 +23,6 @@ export const average = xs => {
   const count = xs.length
   return sum / count
 }
+
+export const clamp = (min, max, value) =>
+  Math.min(Math.max(value, min), max)
