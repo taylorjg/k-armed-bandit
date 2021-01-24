@@ -1,27 +1,27 @@
 {
   "files": {
     "main.css": "/k-armed-bandit/static/css/main.a3c88640.chunk.css",
-    "main.js": "/k-armed-bandit/static/js/main.fa3fa5ab.chunk.js",
-    "main.js.map": "/k-armed-bandit/static/js/main.fa3fa5ab.chunk.js.map",
-    "runtime-main.js": "/k-armed-bandit/static/js/runtime-main.c8e68d61.js",
-    "runtime-main.js.map": "/k-armed-bandit/static/js/runtime-main.c8e68d61.js.map",
+    "main.js": "/k-armed-bandit/static/js/main.bf3a2f08.chunk.js",
+    "main.js.map": "/k-armed-bandit/static/js/main.bf3a2f08.chunk.js.map",
+    "runtime-main.js": "/k-armed-bandit/static/js/runtime-main.8450091f.js",
+    "runtime-main.js.map": "/k-armed-bandit/static/js/runtime-main.8450091f.js.map",
     "static/css/2.39694d85.chunk.css": "/k-armed-bandit/static/css/2.39694d85.chunk.css",
-    "static/js/2.d0b2e59e.chunk.js": "/k-armed-bandit/static/js/2.d0b2e59e.chunk.js",
-    "static/js/2.d0b2e59e.chunk.js.map": "/k-armed-bandit/static/js/2.d0b2e59e.chunk.js.map",
-    "static/js/3.eb28e37b.chunk.js": "/k-armed-bandit/static/js/3.eb28e37b.chunk.js",
-    "static/js/3.eb28e37b.chunk.js.map": "/k-armed-bandit/static/js/3.eb28e37b.chunk.js.map",
-    "59c62ffbc0da56f4c3f0.worker.js": "/k-armed-bandit/59c62ffbc0da56f4c3f0.worker.js",
-    "59c62ffbc0da56f4c3f0.worker.js.map": "/k-armed-bandit/59c62ffbc0da56f4c3f0.worker.js.map",
+    "static/js/2.58519816.chunk.js": "/k-armed-bandit/static/js/2.58519816.chunk.js",
+    "static/js/2.58519816.chunk.js.map": "/k-armed-bandit/static/js/2.58519816.chunk.js.map",
+    "static/js/3.7afde5f9.chunk.js": "/k-armed-bandit/static/js/3.7afde5f9.chunk.js",
+    "static/js/3.7afde5f9.chunk.js.map": "/k-armed-bandit/static/js/3.7afde5f9.chunk.js.map",
+    "f05ae514683ada4abe14.worker.js": "/k-armed-bandit/f05ae514683ada4abe14.worker.js",
+    "f05ae514683ada4abe14.worker.js.map": "/k-armed-bandit/f05ae514683ada4abe14.worker.js.map",
     "index.html": "/k-armed-bandit/index.html",
     "static/css/2.39694d85.chunk.css.map": "/k-armed-bandit/static/css/2.39694d85.chunk.css.map",
     "static/css/main.a3c88640.chunk.css.map": "/k-armed-bandit/static/css/main.a3c88640.chunk.css.map",
-    "static/js/2.d0b2e59e.chunk.js.LICENSE.txt": "/k-armed-bandit/static/js/2.d0b2e59e.chunk.js.LICENSE.txt"
+    "static/js/2.58519816.chunk.js.LICENSE.txt": "/k-armed-bandit/static/js/2.58519816.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
-    "static/js/runtime-main.c8e68d61.js",
+    "static/js/runtime-main.8450091f.js",
     "static/css/2.39694d85.chunk.css",
-    "static/js/2.d0b2e59e.chunk.js",
+    "static/js/2.58519816.chunk.js",
     "static/css/main.a3c88640.chunk.css",
-    "static/js/main.fa3fa5ab.chunk.js"
+    "static/js/main.bf3a2f08.chunk.js"
   ]
 }
