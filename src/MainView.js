@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { ProgressBar } from 'react-bootstrap'
+import SlidingPane from 'react-sliding-pane'
 import { useCallbackWrapper } from './customHooks'
+import SettingsPane from './SettingsPane'
 import * as D from './diagrams'
 import * as L from './logic'
 import * as U from './utils'
 import './MainView.css'
+import 'react-sliding-pane/dist/react-sliding-pane.css'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import worker from 'workerize-loader!./worker'
@@ -86,13 +89,25 @@ const drawDiagrams = (experiments, results) => {
 
 // --------------------------------------------------------------------------------
 
-const K = 10
-const ACTIONS = U.range(K)
-const RUNS = 2000
-const STEPS = 1000
-const NUM_WORKERS = 4
+// const MIN_WEB_WORKERS = 1
+const MAX_WEB_WORKERS = 8
+const INITIAL_WEB_WORKERS = 4
+
+// const MIN_K = 2
+const MAX_K = 10
+const INITIAL_K = MAX_K
+
+const INITIAL_RUNS = 2000
+const INITIAL_STEPS = 1000
 
 const MainView = () => {
+
+  const [settings, setSettings] = useState({
+    webWorkers: INITIAL_WEB_WORKERS,
+    k: INITIAL_K,
+    runs: INITIAL_RUNS,
+    steps: INITIAL_STEPS
+  })
 
   const [experimentsConfig] = useState(() => [
     {
@@ -117,9 +132,12 @@ const MainView = () => {
     }
   ])
 
+  // We only create 'experiments' here because we want to read 'name' and
+  // 'colour' later inside 'drawDiagrams'. Ideally, find a way to get rid.
+  // Ideally, we'd pass 'experimentsConfig' instead of 'experiments' to 'drawDiagrams'.
   const [experiments] = useState(() =>
     experimentsConfig.map(experimentConfig =>
-      L.makeExperiment(experimentConfig, ACTIONS)))
+      L.makeExperiment(experimentConfig, U.range(settings.k))))
 
   const workerResultsRef = useRef([])
 
@@ -146,17 +164,17 @@ const MainView = () => {
   }
 
   useEffect(() => {
-    if (runsCompletedCount === RUNS && workersCompletedCount === NUM_WORKERS) {
+    if (runsCompletedCount === settings.runs && workersCompletedCount === settings.webWorkers) {
       const finalResults = combineWorkerResults(workerResultsRef.current)
       drawDiagrams(experiments, finalResults)
       setRunning(false)
     }
-  }, [experiments, runsCompletedCount, workersCompletedCount])
+  }, [settings, experiments, runsCompletedCount, workersCompletedCount])
 
   const onMessageCallbackWrapper = useCallbackWrapper(onMessage)
 
   const [workerInstances] = useState(() => {
-    const workerInstances = U.range(NUM_WORKERS).map(worker)
+    const workerInstances = U.range(MAX_WEB_WORKERS).map(worker)
     workerInstances.forEach(workerInstance =>
       workerInstance.addEventListener('message', onMessageCallbackWrapper))
     return workerInstances
@@ -168,33 +186,59 @@ const MainView = () => {
     setWorkersCompletedCount(0)
     workerResultsRef.current = []
 
-    const workerMessage = {
-      K,
-      ACTIONS,
-      RUNS: RUNS / NUM_WORKERS,
-      STEPS,
-      experimentsConfig
-    }
+    const normalWorkerRuns = Math.floor(settings.runs / settings.webWorkers)
+    const lastWorkerRuns = settings.runs - (settings.webWorkers - 1) * normalWorkerRuns
 
-    workerInstances.forEach((workerInstance, workerIndex) =>
-      workerInstance.runExperiments(workerMessage, workerIndex))
+    const lastWorkerIndex = settings.webWorkers - 1
+
+    U.range(settings.webWorkers).forEach(workerIndex => {
+      const workerInstance = workerInstances[workerIndex]
+      const workerRuns = workerIndex === lastWorkerIndex ? lastWorkerRuns : normalWorkerRuns
+      const workerMessage = {
+        k: settings.k,
+        runs: workerRuns,
+        steps: settings.steps,
+        experimentsConfig
+      }
+      workerInstance.runExperiments(workerMessage, workerIndex)
+    })
 
     drawDiagrams(experiments, experiments.map(() => ({
       averageRewardsPerStep: [],
       averagePercentOptimalActionsPerStep: []
     })))
-  }, [experimentsConfig, experiments, workerInstances])
+  }, [settings, experimentsConfig, experiments, workerInstances])
 
   useEffect(run, [run])
 
   const onRun = () => run()
 
+  const [settingsPaneIsOpen, setSettingsPaneIsOpen] = useState(false)
+
+  const openSettingsPane = () => {
+    setSettingsPaneIsOpen(true)
+  }
+
+  const closeSettingsPane = () => {
+    setSettingsPaneIsOpen(false)
+  }
+
+  const onSettingsPaneOk = values => {
+    setSettings(values)
+    closeSettingsPane()
+  }
+
+  const onSettingsPaneCancel = () => {
+    closeSettingsPane()
+  }
+
   return (
     <div className="mainview-layout">
       <div className="controls">
         <span>Runs completed:</span>
-        <ProgressBar min={0} max={RUNS} now={runsCompletedCount} />
+        <ProgressBar min={0} max={settings.runs} now={runsCompletedCount} />
         <button onClick={onRun} disabled={running}>Run</button>
+        <button onClick={openSettingsPane} disabled={running}>Settings</button>
       </div>
       <div className="chart-wrapper">
         <canvas id="chart1"></canvas>
@@ -202,6 +246,19 @@ const MainView = () => {
       <div className="chart-wrapper">
         <canvas id="chart2"></canvas>
       </div>
+      <SlidingPane
+        from="left"
+        title="Settings"
+        width="300px"
+        isOpen={settingsPaneIsOpen}
+        onRequestClose={closeSettingsPane}
+      >
+        <SettingsPane
+          settings={settings}
+          onOk={onSettingsPaneOk}
+          onCancel={onSettingsPaneCancel}
+        />
+      </SlidingPane>
     </div>
   )
 }

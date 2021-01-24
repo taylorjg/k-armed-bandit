@@ -12,13 +12,19 @@ without having to eject the React app.
 # TODO
 
 * ~~Deploy to gh-pages branch~~
-* The main part of the code is vanilla JS/HTML inside a React app. This code needs to be moved into React components.
-* Add UI support for changing various configuration values:
-  * Number of web workers (currently 4)
-  * Number of bandit arms aka `k` (currently 10)
-  * Number of runs (currently 2000)
-  * Number of steps (currently 1000)
-  * Epsilon
+  * ~~Using the [gh-pages](https://github.com/tschaub/gh-pages) npm package~~
+  * ~~See also [GitHub Pages](https://create-react-app.dev/docs/deployment#github-pages) in the 'Deployment' section of the [documentation](https://create-react-app.dev/docs/getting-started) for [Create React App](https://create-react-app.dev/)~~
+* ~~The main part of the code is vanilla JS/HTML inside a React app. This code needs to be moved into React components.~~
+* Bring in and use [react-chartjs-2](https://github.com/reactchartjs/react-chartjs-2)
+* ~~Add UI support for changing settings:~~
+  * ~~Number of web workers (currently 4)~~
+  * ~~Number of bandit arms aka `k` (currently 10)~~
+  * ~~Number of runs (currently 2000)~~
+  * ~~Number of steps (currently 1000)~~
+* Add UI support for changing experiments:
+  * Value of `ε` for ε-Greedy
+  * Value of `c` for Upper Confidence Bound
+  * Setting optimistic initial values
   * etc.
 * ~~Add a button to re-run the whole thing~~
 * ~~Add a progress bar during the number crunching~~

@@ -1,0 +1,8 @@
+.basic-config__controls {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.basic-config__controls button {
+  margin-left: .5rem;
+}

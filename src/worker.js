@@ -5,18 +5,18 @@ export const runExperiments = (message, workerIndex) => {
 
   const startTime = performance.now()
 
-  const { experimentsConfig, K, ACTIONS, RUNS, STEPS } = message
+  const { k, runs, steps, experimentsConfig } = message
 
   const experiments = experimentsConfig.map(experimentConfig =>
-    L.makeExperiment(experimentConfig, ACTIONS))
+    L.makeExperiment(experimentConfig, U.range(k)))
 
-  const results = experiments.map(() => new L.ExperimentResults(STEPS))
+  const results = experiments.map(() => new L.ExperimentResults(steps))
 
-  U.range(RUNS).forEach(run => {
+  U.range(runs).forEach(run => {
     const n = run + 1
-    const testBed = new L.TestBed(K)
+    const testBed = new L.TestBed(k)
     experiments.forEach(experiment => experiment.reset())
-    const stepResults = U.range(STEPS).map(step =>
+    const stepResults = U.range(steps).map(step =>
       experiments.map(experiment => L.bandit(testBed, experiment, step + 1)))
     stepResults.forEach((stepResult, step) => {
       stepResult.forEach(({ reward, isOptimal }, experimentIndex) => {

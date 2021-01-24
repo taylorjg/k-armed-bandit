@@ -16,7 +16,11 @@
 .controls > div {
   flex-grow: 1;
   margin-left: .5rem;
-  margin-right: 1rem;
+  margin-right: .5rem;
+}
+
+.controls button {
+  margin-left: .5rem;
 }
 
 /* .controls .progress-bar[aria-valuenow="0"] {
