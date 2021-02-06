@@ -1,8 +1,8 @@
-.basic-config__controls {
+.settings-pane__bottom-controls {
   display: flex;
   justify-content: flex-end;
 }
 
-.basic-config__controls button {
+.settings-pane__bottom-controls button {
   margin-left: .5rem;
 }

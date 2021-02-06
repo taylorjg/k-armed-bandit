@@ -3,11 +3,12 @@ import { ProgressBar } from 'react-bootstrap'
 import SlidingPane from 'react-sliding-pane'
 import { useCallbackWrapper } from './customHooks'
 import SettingsPane from './SettingsPane'
+import ExperimentsPane from './ExperimentsPane'
 import * as C from './constants'
 import * as D from './diagrams'
 import * as L from './logic'
 import * as U from './utils'
-import { AiOutlineSetting } from 'react-icons/ai'
+import { AiOutlineSetting, AiTwotoneExperiment } from 'react-icons/ai'
 import './MainView.css'
 import 'react-sliding-pane/dist/react-sliding-pane.css'
 
@@ -223,6 +224,24 @@ const MainView = () => {
     closeSettingsPane()
   }
 
+  const [experimentsPaneIsOpen, setExperimentsPaneIsOpen] = useState(false)
+
+  const openExperimentsPane = () => {
+    setExperimentsPaneIsOpen(true)
+  }
+
+  const closeExperimentsPane = () => {
+    setExperimentsPaneIsOpen(false)
+  }
+
+  const onExperimentsPaneOk = values => {
+    closeExperimentsPane()
+  }
+
+  const onExperimentsPaneCancel = () => {
+    closeExperimentsPane()
+  }
+
   return (
     <div className="mainview-layout">
       <div className="controls">
@@ -231,6 +250,9 @@ const MainView = () => {
         <button onClick={onRun} disabled={running}>Run</button>
         <button onClick={openSettingsPane} disabled={running}>
           <AiOutlineSetting />
+        </button>
+        <button onClick={openExperimentsPane} disabled={running}>
+          <AiTwotoneExperiment />
         </button>
       </div>
       <div className="chart-wrapper">
@@ -250,6 +272,19 @@ const MainView = () => {
           settings={settings}
           onOk={onSettingsPaneOk}
           onCancel={onSettingsPaneCancel}
+        />
+      </SlidingPane>
+      <SlidingPane
+        from="left"
+        title="Experiments"
+        width="300px"
+        isOpen={experimentsPaneIsOpen}
+        onRequestClose={closeExperimentsPane}
+      >
+        <ExperimentsPane
+          experimentsConfig={experimentsConfig}
+          onOk={onExperimentsPaneOk}
+          onCancel={onExperimentsPaneCancel}
         />
       </SlidingPane>
     </div>

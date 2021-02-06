@@ -76,7 +76,7 @@ const SettingsPane = ({ settings, onOk, onCancel }) => {
         </Form.Control.Feedback>
       </Form.Group>
 
-      <div className="basic-config__controls">
+      <div className="settings-pane__bottom-controls">
         <button variant="primary" type="submit">OK</button>
         <button type="button" onClick={onCancel}>Cancel</button>
       </div>

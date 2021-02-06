@@ -1,0 +1,8 @@
+.experiments-pane__bottom-controls {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.experiments-pane__bottom-controls button {
+  margin-left: .5rem;
+}
